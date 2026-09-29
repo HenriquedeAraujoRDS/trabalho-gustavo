@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>AstroPulse: Fuga Quântica | 2D Endless Runner</title>
+  <meta name="description" content="Um jogo 2D endless runner com mecânica de jetpack, obstáculos futuristas procedurais, power-ups e física responsiva.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="game-container">
+    <!-- Canvas de Renderização do Jogo -->
+    <canvas id="game-canvas"></canvas>
+
+    <!-- HUD em Tempo Real -->
+    <header id="hud" class="hud-layer hidden">
+      <div class="hud-stat hud-distance">
+        <span class="hud-label">DISTÂNCIA</span>
+        <span id="hud-distance-val" class="hud-value">0 <small>m</small></span>
+      </div>
+
+      <div class="hud-stat hud-coins">
+        <span class="hud-icon coin-icon">◈</span>
+        <span id="hud-coins-val" class="hud-value">0</span>
+      </div>
+
+      <div class="hud-stat hud-score">
+        <span class="hud-label">SCORE</span>
+        <span id="hud-score-val" class="hud-value">0</span>
+      </div>
+
+      <!-- Barra de Power-up Ativo -->
+      <div id="powerup-bar-container" class="powerup-indicator hidden">
+        <div class="powerup-icon-wrapper">
+          <span id="powerup-badge-icon">⚡</span>
+        </div>
+        <div class="powerup-bar-track">
+          <div id="powerup-bar-fill" class="powerup-bar-fill"></div>
+        </div>
+        <span id="powerup-badge-name" class="powerup-badge-name">TURBO</span>
+      </div>
+
+      <!-- Botão de Pausa -->
+      <button id="btn-pause" class="btn-icon" aria-label="Pausar Jogo" title="Pausar (P / Esc)">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+          <rect x="6" y="4" width="4" height="16" rx="1"></rect>
+          <rect x="14" y="4" width="4" height="16" rx="1"></rect>
+        </svg>
+      </button>
+    </header>
+
+    <!-- Indicador de aviso para mísseis/drones -->
+    <div id="warning-layer" class="warning-layer"></div>
+
+    <!-- Feedback flutuante de pontuação/moedas -->
+    <div id="toast-layer" class="toast-layer"></div>
+
+    <!-- Menu Principal -->
+    <div id="menu-screen" class="screen-overlay active">
+      <div class="cyber-panel menu-card">
+        <div class="brand-badge">PROJETO QUÂNTICO</div>
+        <h1 class="game-title">ASTROPULSE<span class="title-sub">FUGA DO COMPLEXO</span></h1>
+        <p class="game-tagline">Segure para acionar o propulsor iônico e escape das defesas automatizadas!</p>
+
+        <div class="menu-character-preview">
+          <div class="preview-glow"></div>
+          <canvas id="preview-canvas" width="140" height="140"></canvas>
+        </div>
+
+        <div class="menu-actions">
+          <button id="btn-play" class="cyber-btn btn-primary pulse-btn">
+            <span class="btn-glitch-text">INICIAR MISSÃO</span>
+            <span class="btn-subtext">Espaço / Toque / Clique</span>
+          </button>
+
+          <div class="menu-btn-row">
+            <button id="btn-shop" class="cyber-btn btn-secondary">
+              <span class="btn-icon">⚡</span> MELHORIAS
+            </button>
+            <button id="btn-missions" class="cyber-btn btn-secondary">
+              <span class="btn-icon">🎯</span> MISSÕES
+            </button>
+            <button id="btn-sound-toggle" class="cyber-btn btn-secondary" title="Ativar/Desativar Som">
+              <span id="sound-icon" class="btn-icon">🔊</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="controls-guide">
+          <div class="guide-item">
+            <kbd>ESPAÇO</kbd> / <kbd>↑</kbd> / <kbd>W</kbd> / <span>Toque & Segure</span> : Subir com Jetpack
+          </div>
+          <div class="guide-item">
+            <span>Solte</span> : Queda com Gravidade
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tela de Pausa -->
+    <div id="pause-screen" class="screen-overlay hidden">
+      <div class="cyber-panel pause-card">
+        <h2 class="panel-title">SISTEMA PAUSADO</h2>
+        <p class="panel-desc">Propulsores em repouso temporário.</p>
+        <div class="pause-actions">
+          <button id="btn-resume" class="cyber-btn btn-primary">RETOMAR</button>
+          <button id="btn-pause-restart" class="cyber-btn btn-secondary">REINICIAR</button>
+          <button id="btn-pause-menu" class="cyber-btn btn-secondary">MENU PRINCIPAL</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tela de Game Over / Resultados -->
+    <div id="gameover-screen" class="screen-overlay hidden">
+      <div class="cyber-panel results-card">
+        <div class="danger-header">
+          <span class="danger-icon">⚠️</span>
+          <h2>CONEXÃO INTERROMPIDA</h2>
+          <span class="danger-sub">Impacto crítico detectado</span>
+        </div>
+
+        <div class="stats-grid">
+          <div class="stat-box highlight">
+            <span class="stat-label">Distância Percorrida</span>
+            <span id="res-distance" class="stat-val">0 m</span>
+          </div>
+          <div class="stat-box">
+            <span class="stat-label">Células Coletadas</span>
+            <span id="res-coins" class="stat-val">◈ 0</span>
+          </div>
+          <div class="stat-box">
+            <span class="stat-label">Pontuação Total</span>
+            <span id="res-score" class="stat-val">0</span>
+          </div>
+          <div class="stat-box">
+            <span class="stat-label">Recorde Máximo</span>
+            <span id="res-best" class="stat-val">0 m</span>
+          </div>
+        </div>
+
+        <div id="new-record-badge" class="record-badge hidden">NOVO RECORDE PESSOAL!</div>
+
+        <!-- Notificação de Missões Cumpridas -->
+        <div id="completed-missions-box" class="completed-missions hidden">
+          <div class="mission-alert-title">🎯 Missão Cumprida!</div>
+          <div id="completed-missions-list"></div>
+        </div>
+
+        <div class="results-actions">
+          <button id="btn-restart" class="cyber-btn btn-primary pulse-btn">
+            TENTAR NOVAMENTE
+          </button>
+          <div class="results-btn-row">
+            <button id="btn-res-shop" class="cyber-btn btn-secondary">MELHORIAS</button>
+            <button id="btn-res-menu" class="cyber-btn btn-secondary">MENU</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal de Melhorias / Loja -->
+    <div id="shop-modal" class="screen-overlay hidden">
+      <div class="cyber-panel shop-card">
+        <div class="modal-header">
+          <div class="modal-title-wrap">
+            <h2>LABORATÓRIO DE MELHORIAS</h2>
+            <div class="wallet-display">
+              Saldo: <span class="coin-icon">◈</span> <span id="shop-wallet-val">0</span>
+            </div>
+          </div>
+          <button id="btn-close-shop" class="close-btn" aria-label="Fechar">&times;</button>
+        </div>
+
+        <div class="upgrades-list" id="upgrades-container">
+          <!-- Gerado dinamicamente -->
+        </div>
+
+        <div class="modal-footer">
+          <button id="btn-done-shop" class="cyber-btn btn-primary">CONCLUÍDO</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal de Missões -->
+    <div id="missions-modal" class="screen-overlay hidden">
+      <div class="cyber-panel missions-card">
+        <div class="modal-header">
+          <h2>OBJETIVOS DO PILOTO</h2>
+          <button id="btn-close-missions" class="close-btn" aria-label="Fechar">&times;</button>
+        </div>
+        <p class="modal-sub">Complete objetivos para receber bônus de células de energia!</p>
+        <div class="missions-list" id="missions-container">
+          <!-- Gerado dinamicamente -->
+        </div>
+        <div class="modal-footer">
+          <button id="btn-done-missions" class="cyber-btn btn-primary">VOLTAR</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Scripts Modulares -->
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>

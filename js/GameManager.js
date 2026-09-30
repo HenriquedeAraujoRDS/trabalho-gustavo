@@ -277,6 +277,10 @@ export class GameManager {
    */
   draw() {
     const ctx = this.ctx;
+
+    // Limpa o canvas inteiro para evitar fantasmas de frames anteriores
+    ctx.clearRect(0, 0, this.width, this.height);
+
     ctx.save();
 
     // Aplica trepidação de tela
@@ -288,6 +292,9 @@ export class GameManager {
 
     // Escala para resolução virtual
     ctx.scale(this.scale, this.scale);
+
+    // Largura visível real em coordenadas virtuais (pode ser > VIRTUAL_WIDTH)
+    this.visibleVW = this.width / this.scale;
 
     // 1. Fundo do Complexo Quântico com Parallax
     this.drawParallaxBackground(ctx);
@@ -319,10 +326,10 @@ export class GameManager {
    * Fundo sci-fi com 3 camadas de profundidade
    */
   drawParallaxBackground(ctx) {
-    const vw = CONFIG.VIRTUAL_WIDTH;
+    const vw = this.visibleVW || CONFIG.VIRTUAL_WIDTH;
     const vh = CONFIG.VIRTUAL_HEIGHT;
 
-    // Gradiente de fundo do complexo
+    // Gradiente de fundo do complexo (cobre toda a largura visível)
     const skyGrad = ctx.createLinearGradient(0, 0, 0, vh);
     skyGrad.addColorStop(0, '#090b16');
     skyGrad.addColorStop(0.5, '#0e1222');
@@ -374,22 +381,22 @@ export class GameManager {
    * Renderiza teto energizado e solo do setor industrial
    */
   drawFloorAndCeiling(ctx) {
-    const vw = CONFIG.VIRTUAL_WIDTH;
+    const vw = this.visibleVW || CONFIG.VIRTUAL_WIDTH;
 
-    // TETO
+    // TETO (cobre toda a largura visível)
     ctx.fillStyle = '#0a0d18';
     ctx.fillRect(0, 0, vw, CONFIG.CEILING_Y);
 
     ctx.strokeStyle = '#00f0ff';
     ctx.lineWidth = 2;
     ctx.shadowColor = '#00f0ff';
-    ctx.shadowBlur = 8;
+    ctx.shadowBlur = 4;
     ctx.beginPath();
     ctx.moveTo(0, CONFIG.CEILING_Y);
     ctx.lineTo(vw, CONFIG.CEILING_Y);
     ctx.stroke();
 
-    // CHÃO
+    // CHÃO (cobre toda a largura visível)
     ctx.shadowBlur = 0;
     ctx.fillStyle = '#0d111e';
     ctx.fillRect(0, CONFIG.PHYSICS.GROUND_Y + CONFIG.PLAYER.HEIGHT, vw, 60);
@@ -398,7 +405,7 @@ export class GameManager {
     ctx.strokeStyle = '#00f0ff';
     ctx.lineWidth = 2.5;
     ctx.shadowColor = '#00f0ff';
-    ctx.shadowBlur = 10;
+    ctx.shadowBlur = 5;
     ctx.beginPath();
     ctx.moveTo(0, CONFIG.PHYSICS.GROUND_Y + CONFIG.PLAYER.HEIGHT);
     ctx.lineTo(vw, CONFIG.PHYSICS.GROUND_Y + CONFIG.PLAYER.HEIGHT);
@@ -425,7 +432,7 @@ export class GameManager {
     ctx.save();
     ctx.strokeStyle = 'rgba(255, 0, 85, 0.6)';
     ctx.lineWidth = 2;
-    const count = 14;
+    const count = 8;
 
     for (let i = 0; i < count; i++) {
       const y = CONFIG.CEILING_Y + Math.random() * (CONFIG.PHYSICS.GROUND_Y - CONFIG.CEILING_Y);

@@ -96,7 +96,7 @@ export class LaserObstacle extends Obstacle {
 
     // Linha de descarga elétrica / feixe
     ctx.shadowColor = '#ffaa00';
-    ctx.shadowBlur = 12 * pulse;
+    ctx.shadowBlur = 6;
 
     // Feixe externo (laranja/dourado incandescente)
     ctx.strokeStyle = `rgba(255, 140, 0, ${pulse})`;
@@ -196,30 +196,35 @@ export class MissileObstacle extends Obstacle {
       const diffY = playerY - this.y;
       this.y += Math.sign(diffY) * Math.min(Math.abs(diffY), this.trackingSpeed * dt);
 
-      // Partículas de fumaça e fogo do foguete
-      this.particles.push({
-        x: this.x + this.width,
-        y: this.y + this.height / 2 + (Math.random() - 0.5) * 4,
-        size: 5 + Math.random() * 4,
-        life: 0.25,
-        maxLife: 0.25,
-        color: Math.random() > 0.4 ? '#ff0055' : '#ff9900'
-      });
+      // Partículas de fumaça e fogo do foguete (limitadas)
+      if (this.particles.length < 15) {
+        this.particles.push({
+          x: this.x + this.width,
+          y: this.y + this.height / 2 + (Math.random() - 0.5) * 4,
+          size: 5 + Math.random() * 4,
+          life: 0.25,
+          maxLife: 0.25,
+          color: Math.random() > 0.4 ? '#ff0055' : '#ff9900'
+        });
+      }
 
       if (this.x + this.width < -80) {
         this.isDead = true;
       }
     }
 
-    // Atualiza partículas do rastro
-    for (let i = this.particles.length - 1; i >= 0; i--) {
+    // Atualiza partículas do rastro (swap-and-pop)
+    let pLen = this.particles.length;
+    for (let i = pLen - 1; i >= 0; i--) {
       const p = this.particles[i];
       p.life -= dt;
       p.x += 120 * dt;
       if (p.life <= 0) {
-        this.particles.splice(i, 1);
+        this.particles[i] = this.particles[pLen - 1];
+        pLen--;
       }
     }
+    this.particles.length = pLen;
   }
 
   getHitbox() {
@@ -245,8 +250,6 @@ export class MissileObstacle extends Obstacle {
       const p = this.particles[i];
       ctx.globalAlpha = p.life / p.maxLife;
       ctx.fillStyle = p.color;
-      ctx.shadowColor = p.color;
-      ctx.shadowBlur = 6;
       ctx.beginPath();
       ctx.arc(p.x, p.y, p.size * (p.life / p.maxLife), 0, Math.PI * 2);
       ctx.fill();
@@ -265,7 +268,7 @@ export class MissileObstacle extends Obstacle {
     ctx.strokeStyle = '#ff0055';
     ctx.lineWidth = 1.5;
     ctx.shadowColor = '#ff0055';
-    ctx.shadowBlur = 8;
+    ctx.shadowBlur = 4;
 
     ctx.beginPath();
     ctx.moveTo(mx + mw, my + 3);
@@ -405,7 +408,7 @@ export class MovingBarrierObstacle extends Obstacle {
     // Núcleo de energia central pulsante
     const pulse = 0.5 + Math.sin(this.timer * 4) * 0.5;
     ctx.shadowColor = '#00f0ff';
-    ctx.shadowBlur = 10 * pulse;
+    ctx.shadowBlur = 5 * pulse;
     ctx.fillStyle = `rgba(0, 240, 255, ${0.4 + pulse * 0.5})`;
     ctx.fillRect(bx + 7, by + 12, bw - 14, bh - 24);
 

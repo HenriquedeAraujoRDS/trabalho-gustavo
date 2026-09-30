@@ -243,7 +243,7 @@ export class Player {
       // Brilho dos estabilizadores das botas
       ctx.fillStyle = '#00f0ff';
       ctx.shadowColor = '#00f0ff';
-      ctx.shadowBlur = 6;
+      ctx.shadowBlur = 3;
       ctx.fillRect(ox + 8, oy + 44, 9, 3);
       ctx.fillRect(ox + 18, oy + 42, 9, 3);
       ctx.shadowBlur = 0;
@@ -264,7 +264,7 @@ export class Player {
     // Reator Arc no peito (Luz pulsante)
     ctx.fillStyle = '#00f0ff';
     ctx.shadowColor = '#00f0ff';
-    ctx.shadowBlur = 8;
+    ctx.shadowBlur = 5;
     ctx.beginPath();
     ctx.arc(ox + 18, oy + 23, 3, 0, Math.PI * 2);
     ctx.fill();
@@ -279,7 +279,7 @@ export class Player {
     // Visor Neon Curvo
     ctx.fillStyle = '#00f0ff';
     ctx.shadowColor = '#00f0ff';
-    ctx.shadowBlur = 8;
+    ctx.shadowBlur = 5;
     ctx.beginPath();
     ctx.roundRect(ox + 17, oy + 5, 11, 6, 2);
     ctx.fill();
@@ -323,7 +323,7 @@ export class Player {
 
     ctx.fillStyle = grad;
     ctx.shadowColor = '#00f0ff';
-    ctx.shadowBlur = 14;
+    ctx.shadowBlur = 8;
 
     ctx.beginPath();
     ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);

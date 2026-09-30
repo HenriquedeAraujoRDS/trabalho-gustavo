@@ -73,15 +73,13 @@ export class Coin {
     const cx = this.x;
     const cy = this.y + Math.sin(this.floatTimer) * 2.5;
 
-    // Rotação horizontal (largura variável como moeda girando)
-    const scaleX = Math.cos(this.rotation);
+    // Rotação horizontal com clamp para evitar artefatos visuais
+    const rawScaleX = Math.cos(this.rotation);
+    const scaleX = Math.abs(rawScaleX) < 0.15 ? Math.sign(rawScaleX) * 0.15 : rawScaleX;
     ctx.translate(cx, cy);
     ctx.scale(scaleX, 1);
 
-    ctx.shadowColor = '#ffb703';
-    ctx.shadowBlur = 10;
-
-    // Losango externo dourado
+    // Losango externo dourado (sem shadowBlur para performance)
     ctx.fillStyle = '#ffb703';
     ctx.beginPath();
     ctx.moveTo(0, -this.radius);
@@ -123,16 +121,19 @@ export class CoinManager {
   }
 
   update(dt, scrollSpeed, player, magnetRadius, audioManager, scoreManager) {
-    // 1. Atualiza partículas de coleta
-    for (let i = this.particles.length - 1; i >= 0; i--) {
+    // 1. Atualiza partículas de coleta (swap-and-pop para O(1))
+    let pLen = this.particles.length;
+    for (let i = pLen - 1; i >= 0; i--) {
       const p = this.particles[i];
       p.life -= dt;
       p.x += p.vx * dt;
       p.y += p.vy * dt;
       if (p.life <= 0) {
-        this.particles.splice(i, 1);
+        this.particles[i] = this.particles[pLen - 1];
+        pLen--;
       }
     }
+    this.particles.length = pLen;
 
     // 2. Atualiza e coleta moedas
     const playerBox = player.getHitbox();
@@ -250,18 +251,19 @@ export class CoinManager {
       this.coins[i].draw(ctx);
     }
 
-    // Desenha faíscas de coleta
-    ctx.save();
-    for (let i = 0; i < this.particles.length; i++) {
-      const p = this.particles[i];
-      ctx.globalAlpha = p.life / p.maxLife;
-      ctx.fillStyle = p.color;
-      ctx.shadowColor = p.color;
-      ctx.shadowBlur = 6;
-      ctx.beginPath();
-      ctx.arc(p.x, p.y, 2.5, 0, Math.PI * 2);
-      ctx.fill();
+    // Desenha faíscas de coleta (sem shadowBlur para performance)
+    if (this.particles.length > 0) {
+      ctx.save();
+      ctx.shadowBlur = 0;
+      for (let i = 0; i < this.particles.length; i++) {
+        const p = this.particles[i];
+        ctx.globalAlpha = p.life / p.maxLife;
+        ctx.fillStyle = p.color;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, 2.5, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.restore();
     }
-    ctx.restore();
   }
 }

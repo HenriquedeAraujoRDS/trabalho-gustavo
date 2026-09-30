@@ -7,6 +7,7 @@ export class Jetpack {
     this.isActive = false;
     this.particles = [];
     this.heat = 0; // Para brilho dinâmico do bocal
+    this.MAX_PARTICLES = 60; // Limite para performance
   }
 
   /**
@@ -35,21 +36,25 @@ export class Jetpack {
       const nozzleX = playerX + 4;
       const nozzleY = isGravityInverted ? playerY + 8 : playerY + 38;
 
-      // Taxa de emissão de partículas de plasma
-      const count = isTurbo ? 6 : 3;
+      // Taxa de emissão de partículas de plasma (limitada)
+      const count = isTurbo ? 4 : 2;
       for (let i = 0; i < count; i++) {
-        this.emitParticle(nozzleX, nozzleY, isTurbo, isGravityInverted);
+        if (this.particles.length < this.MAX_PARTICLES) {
+          this.emitParticle(nozzleX, nozzleY, isTurbo, isGravityInverted);
+        }
       }
     } else {
       this.heat = Math.max(0, this.heat - dt * 3);
     }
 
-    // Atualização física de cada partícula
-    for (let i = this.particles.length - 1; i >= 0; i--) {
+    // Atualização física de cada partícula (swap-and-pop para O(1))
+    let len = this.particles.length;
+    for (let i = len - 1; i >= 0; i--) {
       const p = this.particles[i];
       p.life -= dt;
       if (p.life <= 0) {
-        this.particles.splice(i, 1);
+        this.particles[i] = this.particles[len - 1];
+        len--;
         continue;
       }
 
@@ -57,6 +62,7 @@ export class Jetpack {
       p.y += p.vy * dt;
       p.size = Math.max(0.5, p.initialSize * (p.life / p.maxLife));
     }
+    this.particles.length = len;
   }
 
   /**
@@ -96,15 +102,16 @@ export class Jetpack {
    * Renderiza as partículas com efeito de luz aditiva
    */
   drawParticles(ctx) {
+    if (this.particles.length === 0) return;
+
     ctx.save();
     ctx.globalCompositeOperation = 'lighter';
+    ctx.shadowBlur = 0; // Desabilita shadow para performance
 
     for (let i = 0; i < this.particles.length; i++) {
       const p = this.particles[i];
       const alpha = Math.max(0, p.life / p.maxLife);
 
-      ctx.shadowColor = p.glowColor;
-      ctx.shadowBlur = 8;
       ctx.fillStyle = p.color;
       ctx.globalAlpha = alpha;
 
